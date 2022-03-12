@@ -20,7 +20,7 @@ namespace Yorozu
         /// 図形の回転許可されるか
         /// </summary>
         private bool _validChange;
-
+        
         /// <summary>
         /// 配置した場合の全パターン
         /// </summary>
@@ -31,11 +31,26 @@ namespace Yorozu
         /// 個数
         /// </summary>
         internal int Amount => _validPosition.Count;
+        
+        /// <summary>
+        /// スコア順にソートするので、もともとの並び順を記憶
+        /// </summary>
+        internal int Index { get; }
+        /// <summary>
+        /// ソートする際のスコア
+        /// 大きいほど先に置く
+        /// </summary>
+        internal int Score { get; }
 
-        internal ItemData(bool[,] shape, Vector2Int size)
+        internal ItemData(bool[,] shape, Vector2Int size, int index)
         {
+            Index = index;
             CacheValidPosition(shape);
             SetMap(size);
+
+            // 縦と横の割合の大きい方をとって それに、個数をかけてスコアとする
+            var maxRate = Mathf.Max(width / (float) size.x, height / (float) size.y);
+            Score = Mathf.CeilToInt(maxRate * Amount);
         }
 
         /// <summary>

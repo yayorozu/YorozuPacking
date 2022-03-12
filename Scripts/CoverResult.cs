@@ -12,13 +12,13 @@ namespace Yorozu
         /// <summary>
         /// 計算時間
         /// </summary>
-        public int Milliseconds { get; }
+        public int CalcMilliseconds { get; }
 
-        public CoverResult(bool success, int[,] successMap, int milliseconds, IEnumerable<Log> logs)
+        public CoverResult(bool success, int[,] successMap, int calcMilliseconds, IEnumerable<Log> logs)
         {
             Success = success;
             SuccessMap = successMap;
-            Milliseconds = milliseconds;
+            CalcMilliseconds = calcMilliseconds;
             Logs = logs;
         }
 

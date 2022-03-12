@@ -14,14 +14,12 @@ namespace Yorozu
     {
         internal Vector2Int size { get; }
         internal ItemData[] data { get; }
-        
-        internal IEnumerable<Log> Logs => _logs;
-        internal int[,] SuccessMap { get; private set; }
-        
+
         private int _minAmount;
         private int _logScore;
+        private int[,] _successMap;
         private List<Log> _logs;
-
+        
         /// <summary>
         /// コンストラクタ
         /// </summary>
@@ -41,20 +39,26 @@ namespace Yorozu
         /// <summary>
         /// 再帰的に探索開始
         /// </summary>
-        internal void Process(bool isParallel, Action<bool> callback)
+        internal void Process(bool isParallel, Action<CoverResult> endCallback)
         {
-            _ = ProcessImpl(isParallel, callback);
+            _ = ProcessImpl(isParallel, endCallback);
         }
 
-        private async Task ProcessImpl(bool isParallel, Action<bool> callback)
+        private async Task ProcessImpl(bool isParallel, Action<CoverResult> callback)
         {
+            var begin = DateTime.Now;
             var source = new CancellationTokenSource();
             if (isParallel)
                 await Parallel(source);
             else
                 await Sequence(source);
 
-            callback.Invoke(SuccessMap != null);
+            var elapsedTime = (DateTime.Now - begin).Milliseconds;
+
+            // 結果をセット
+            var result = new CoverResult(_successMap != null, _successMap, elapsedTime, _logs);
+
+            callback.Invoke(result);
         }
 
         /// <summary>
@@ -103,7 +107,7 @@ namespace Yorozu
             {
                 // 見つかったら止める
                 source.Cancel();
-                SuccessMap = node.CurrentMap;
+                _successMap = node.CurrentMap;
             }
 
             return Task.FromResult(success);

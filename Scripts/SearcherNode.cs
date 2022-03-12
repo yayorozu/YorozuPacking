@@ -45,14 +45,14 @@ namespace Yorozu
             // 最初のピースを取り出す
             var index = _unusedHash.First();
             var data = _owner.data[index];
-            foreach (var map in data.Maps)
+            foreach (var points in data.Maps)
             {
-                var noAllValid = map.Any(p => !_box.Valid(p));
+                var noAllValid = points.Any(p => !_box.Valid(p));
                 // 置けない
                 if (noAllValid)
                     continue;
                 
-                _box.Put(map, index);
+                _box.Put(points, data.Index);
                 
                 // おけたので削除
                 _unusedHash.Remove(index);
@@ -62,7 +62,7 @@ namespace Yorozu
                     return true;
                 
                 // 見つからなかったので今置いたやつを戻して次を探す
-                _box.Reset(map);
+                _box.Reset(points);
                 _unusedHash.Add(index);
             }
             

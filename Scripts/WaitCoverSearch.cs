@@ -47,14 +47,13 @@ namespace Yorozu
 
         private void SetData(int width, int height, IEnumerable<bool[,]> shapes)
         {
-            var count = shapes.Count();
-            
-            _data = new ItemData[count];
             _size = new Vector2Int(width, height);
-            for (var i = 0; i < count; i++)
-            {
-                _data[i] = new ItemData(shapes.ElementAt(i), _size);
-            }   
+            _data = shapes
+                .Select((v, i) => new ItemData(v, _size, i))
+                // スコア順にソートしたほうが遅いt
+                //.OrderByDescending(d => d.Score)
+                .ToArray();
+            ;
         }
 
         /// <summary>
@@ -71,9 +70,9 @@ namespace Yorozu
             
             search.Process(parallel, SearchFinish);
             
-            void SearchFinish(bool success)
+            void SearchFinish(CoverResult result)
             {
-                _result = new CoverResult(success, search.SuccessMap, 0, search.Logs);
+                _result = result;
                 _wait = false;   
             }
         }
