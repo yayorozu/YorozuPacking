@@ -1,3 +1,6 @@
+// 全通り検索が有効か
+//#define PERMUTATION
+
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -9,32 +12,28 @@ namespace Yorozu
     /// </summary>
     internal class Searcher
     {
-        private Box _box;
-        private ItemData[] _data;
-        private HashSet<int> _unusedHash;
+        internal Vector2Int size { get; }
+        internal ItemData[] data { get; }
+        
+        internal IEnumerable<Log> Logs => _logs;
+        internal int[,] SuccessMap { get; private set; }
+        
         private int _minAmount;
         private int _logScore;
         private List<Log> _logs;
-
-        internal IEnumerable<Log> Logs => _logs;
-        internal int[,] LastMap => _box.Map;
 
         /// <summary>
         /// コンストラクタ
         /// </summary>
         /// <param name="size"></param>
         /// <param name="data"></param>
+        /// <param name="logScore"></param>
         internal Searcher(Vector2Int size, ItemData[] data, int logScore = -1)
         {
-            _box = new Box(size);
-            _data = data;
+            this.size = size;
+            this.data = data;
             _logScore = logScore;
-            _unusedHash = new HashSet<int>(_data.Length);
-            for (var i = 0; i < _data.Length; i++)
-            {
-                _unusedHash.Add(i);
-            }
-
+            
             _minAmount = data.Max(d => d.Amount);
             _logs = new List<Log>();
         }
@@ -42,51 +41,89 @@ namespace Yorozu
         /// <summary>
         /// 再帰的に探索開始
         /// </summary>
-        internal bool ProcessRecursive()
+        internal bool Process()
         {
-            // ログ
-            if (_logScore >= 0 && _box.EmptyCount() <= _logScore)
+#if PERMUTATION
+            var indexes = new int[data.Length];
+            for (var i = 0; i < indexes.Length; i++) 
+                indexes[i] = i;
+
+            // 全通りやる必要があるため、全部の順番を取得
+            foreach (var pattern in Permutation(indexes))
             {
-                _logs.Add(new Log(_box.Copy(), _box.EmptyCount()));
-            }
-            
-            // 全部置いた
-            if (_unusedHash.Count <= 0)
-                return true;
-
-
-            // 空き領域が最小サイズより少ない場合は置けない
-            if (_box.EmptyCount() < _minAmount)
-                return false;
-
-            // 最初のピースを取り出す
-            var index = _unusedHash.First();
-            var data = _data[index];
-            foreach (var map in data.Maps)
+                var list = new HashSet<int>(pattern.Length);
+                foreach (var index in pattern) 
+                    list.Add(index);
+#else
+            for (var i = 0; i < data.Length; i++)
             {
-                var noAllValid = map.Any(p => !_box.Valid(p));
-                // 置けない
-                if (noAllValid)
+                var list = new HashSet<int>(data.Length);
+                for (var j = 0; j < data.Length; j++)
+                {
+                    list.Add((i + j) % data.Length);
+                }
+#endif
+                var node = new SearcherNode(this, list);
+                var success = node.ProcessRecursive();
+                if (!success) 
                     continue;
                 
-                _box.Put(map, index);
-                
-                // おけたので削除
-                _unusedHash.Remove(index);
-                
-                Debug.LogError(_box.ToString());
-                
-                // 置けたら次をチェック
-                if (ProcessRecursive())
-                    return true;
-                
-                // 見つからなかったので今置いたやつを戻して次を探す
-                _box.Reset(map);
-                _unusedHash.Add(index);
+                SuccessMap = node.CurrentMap;
+                return true;
             }
-
-            // 解無し
+            
             return false;
         }
+
+        /// <summary>
+        /// ログ追加
+        /// </summary>
+        internal void AddLog(Box box)
+        {
+            if (_logScore < 0 || box.EmptyCount() > _logScore) 
+                return;
+            
+            if (box.EmptyCount() == 0)
+                return;
+            
+            _logs.Add(new Log(box.Copy(), box.EmptyCount()));
+        }
+        
+        /// <summary>
+        /// 現在の状態で埋めを継続できるか確認する
+        /// </summary>
+        internal bool Continuable(Box box)
+        {
+            // 空き領域が最小サイズより少ない場合は置けない
+            if (box.EmptyCount() < _minAmount) 
+                return false;
+
+            return true;
+        }
+        
+#if PERMUTATION
+        /// <summary>
+        /// 全組み合わせを取得
+        /// </summary>
+        private IEnumerable<int[]> Permutation(IEnumerable<int> items) 
+        {
+            if (items.Count() == 1) 
+            {
+                yield return new int[] { items.First() };
+                yield break;
+            }
+            
+            foreach (var item in items) 
+            {
+                var leftSide = new int[] { item };
+                var unused = items.Except(leftSide);
+                foreach (var rightSide in Permutation(unused)) 
+                {
+                    yield return leftSide.Concat(rightSide).ToArray();
+                }
+            }
+        }
+#endif
+        
     }
 }

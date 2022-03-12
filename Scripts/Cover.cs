@@ -57,8 +57,8 @@ namespace Yorozu
         public CoverResult Evaluate()
         {
             var search = new Searcher(_size, _data);
-            var success = search.ProcessRecursive();
-            return new CoverResult(success, success ? search.LastMap : null);
+            var success = search.Process();
+            return new CoverResult(success, success ? search.SuccessMap : null);
         }
         
         /// <summary>
@@ -70,9 +70,9 @@ namespace Yorozu
         public CoverResult Evaluate(int logScore)
         {
             var search = new Searcher(_size, _data, logScore);
-            var success = search.ProcessRecursive();
+            var success = search.Process();
             
-            return new CoverResult(success, success ? search.LastMap : null, search.Logs);
+            return new CoverResult(success, success ? search.SuccessMap : null, search.Logs);
         }
     }
 }
