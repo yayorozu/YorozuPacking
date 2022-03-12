@@ -1,8 +1,9 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Yorozu
 {
-    public class CoverResult : IPrint
+    public class CoverResult : CustomYieldInstruction, IPrint
     {
         int[,] IPrint.Map => SuccessMap;
             
@@ -25,5 +26,7 @@ namespace Yorozu
         {
             return this.Print();
         }
+
+        public override bool keepWaiting { get; }
     }
 }

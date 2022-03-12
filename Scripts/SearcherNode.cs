@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 
 namespace Yorozu
@@ -11,28 +12,33 @@ namespace Yorozu
     {
         private Searcher _owner;
         private Box _box;
-        private HashSet<int> _unusedHash;
+        private List<int> _unusedHash;
         
         internal int[,] CurrentMap => _box.Map;
 
-        internal SearcherNode(Searcher owner, HashSet<int> indexes)
+        internal SearcherNode(Searcher owner, List<int> indexes)
         {
             _owner = owner;
             _box = new Box(owner.size);
             _unusedHash = indexes;
         }
-        
+
         /// <summary>
         /// 再帰的に探索開始
         /// </summary>
-        internal bool ProcessRecursive()
+        /// <param name="token"></param>
+        internal bool ProcessRecursive(CancellationToken token)
         {
-            _owner.AddLog(_box);
-
+            // キャンセルされた
+            if (token.IsCancellationRequested)
+                return false;
+            
             // 全部置いた
             if (_unusedHash.Count <= 0)
                 return true;
             
+            _owner.AddLog(_box);
+
             if (!_owner.Continuable(_box))
                 return false;
             
@@ -52,7 +58,7 @@ namespace Yorozu
                 _unusedHash.Remove(index);
                 
                 // 置けたら次をチェック
-                if (ProcessRecursive())
+                if (ProcessRecursive(token))
                     return true;
                 
                 // 見つからなかったので今置いたやつを戻して次を探す

@@ -1,8 +1,8 @@
-// 全通り検索が有効か
-//#define PERMUTATION
-
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Yorozu
@@ -41,38 +41,55 @@ namespace Yorozu
         /// <summary>
         /// 再帰的に探索開始
         /// </summary>
-        internal bool Process()
+        internal void Process(Action<bool> callback)
         {
-#if PERMUTATION
-            var indexes = new int[data.Length];
-            for (var i = 0; i < indexes.Length; i++) 
-                indexes[i] = i;
+            _ = ProcessImpl(callback);
+        }
 
-            // 全通りやる必要があるため、全部の順番を取得
-            foreach (var pattern in Permutation(indexes))
-            {
-                var list = new HashSet<int>(pattern.Length);
-                foreach (var index in pattern) 
-                    list.Add(index);
-#else
+        private Task ProcessImpl(Action<bool> callback)
+        {
+            var source = new CancellationTokenSource();
+            var tasks = new List<Task>();
+
             for (var i = 0; i < data.Length; i++)
             {
-                var list = new HashSet<int>(data.Length);
-                for (var j = 0; j < data.Length; j++)
-                {
-                    list.Add((i + j) % data.Length);
-                }
-#endif
-                var node = new SearcherNode(this, list);
-                var success = node.ProcessRecursive();
-                if (!success) 
-                    continue;
-                
-                SuccessMap = node.CurrentMap;
-                return true;
+                tasks.Add(SearchTask(i, source));
             }
+
+            var allTask = Task.WhenAll(tasks);
+
+            try
+            {
+                allTask.Wait(source.Token);
+            }
+            catch
+            {
+                // ignored
+            }
+
+            callback.Invoke(SuccessMap != null);
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 非同期で一気に投げる
+        /// </summary>
+        private Task SearchTask(int startIndex, CancellationTokenSource source)
+        {
+            var indexes = new List<int>(data.Length);
+            for (var i = 0; i < data.Length; i++) 
+                indexes.Add((startIndex + i) % data.Length);
             
-            return false;
+            var node = new SearcherNode(this, indexes);
+            var success = node.ProcessRecursive(source.Token);
+            if (success)
+            {
+                // 見つかったら止める
+                source.Cancel();
+                SuccessMap = node.CurrentMap;
+            }
+
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -80,10 +97,7 @@ namespace Yorozu
         /// </summary>
         internal void AddLog(Box box)
         {
-            if (_logScore < 0 || box.EmptyCount() > _logScore) 
-                return;
-            
-            if (box.EmptyCount() == 0)
+            if (_logScore < 0 || box.EmptyCount() == 0 || box.EmptyCount() > _logScore) 
                 return;
             
             _logs.Add(new Log(box.Copy(), box.EmptyCount()));
@@ -100,30 +114,5 @@ namespace Yorozu
 
             return true;
         }
-        
-#if PERMUTATION
-        /// <summary>
-        /// 全組み合わせを取得
-        /// </summary>
-        private IEnumerable<int[]> Permutation(IEnumerable<int> items) 
-        {
-            if (items.Count() == 1) 
-            {
-                yield return new int[] { items.First() };
-                yield break;
-            }
-            
-            foreach (var item in items) 
-            {
-                var leftSide = new int[] { item };
-                var unused = items.Except(leftSide);
-                foreach (var rightSide in Permutation(unused)) 
-                {
-                    yield return leftSide.Concat(rightSide).ToArray();
-                }
-            }
-        }
-#endif
-        
     }
 }

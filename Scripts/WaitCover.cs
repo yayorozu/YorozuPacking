@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -9,14 +10,20 @@ namespace Yorozu
     /// 瓶詰め詰めアルゴリズムを利用して瓶詰めを行う
     /// Bottom-Left Algorithm
     /// </summary>
-    public class Cover
+    public class WaitCover : CustomYieldInstruction
     {
+        public override bool keepWaiting => _wait;
+
+        public CoverResult Result => _result;
+        private CoverResult _result; 
+        
         public const int EMPTY = -1;
 
         private ItemData[] _data;
         private Vector2Int _size;
+        private bool _wait;
 
-        public Cover(int width, int height, IEnumerable<int[,]> shapes)
+        public WaitCover(int width, int height, IEnumerable<int[,]> shapes)
         {
             SetData(width, height, shapes.Select(Convert));
             bool[,] Convert(int[,] shape)
@@ -34,7 +41,7 @@ namespace Yorozu
             }
         }
 
-        public Cover(int width, int height, IEnumerable<bool[,]> shapes)
+        public WaitCover(int width, int height, IEnumerable<bool[,]> shapes)
         {
             SetData(width, height, shapes);
         }
@@ -54,11 +61,9 @@ namespace Yorozu
         /// <summary>
         /// 探索開始
         /// </summary>
-        public CoverResult Evaluate()
+        public void Evaluate()
         {
-            var search = new Searcher(_size, _data);
-            var success = search.Process();
-            return new CoverResult(success, success ? search.SuccessMap : null);
+            Evaluate(-1);
         }
         
         /// <summary>
@@ -67,12 +72,15 @@ namespace Yorozu
         /// </summary>
         /// <param name="logScore"></param>
         /// <returns></returns>
-        public CoverResult Evaluate(int logScore)
+        public void Evaluate(int logScore)
         {
+            _wait = true;
             var search = new Searcher(_size, _data, logScore);
-            var success = search.Process();
-            
-            return new CoverResult(success, success ? search.SuccessMap : null, search.Logs);
+            search.Process(success =>
+            {
+                _result = new CoverResult(success, search.SuccessMap, search.Logs);
+                _wait = false;
+            });
         }
     }
 }
