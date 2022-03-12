@@ -20,7 +20,7 @@ namespace Yorozu
             {
                 for (var y = 0; y < size.y; y++)
                 {
-                    _map[x, y] = WaitCoverSearch.EMPTY;
+                    _map[x, y] = WaitPackingSearch.EMPTY;
                 }
             }
 
@@ -29,7 +29,7 @@ namespace Yorozu
 
         internal bool Valid(Vector2Int point)
         {
-            return _map[point.x, point.y] == WaitCoverSearch.EMPTY;
+            return _map[point.x, point.y] == WaitPackingSearch.EMPTY;
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace Yorozu
         {
             foreach (var point in points)
             {
-                _map[point.x, point.y] = WaitCoverSearch.EMPTY;
+                _map[point.x, point.y] = WaitPackingSearch.EMPTY;
             }
 
             _empty += points.Length;

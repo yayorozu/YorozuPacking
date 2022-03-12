@@ -1,6 +1,6 @@
 namespace Yorozu
 {
-    internal static class CoverUtility
+    internal static class PackingUtility
     {
         internal static string Print(this IPrint print)
         {

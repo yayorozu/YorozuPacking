@@ -5,16 +5,14 @@ using UnityEngine;
 namespace Yorozu
 {
     /// <summary>
-    /// Exact Cover Problem
-    /// 瓶詰め詰めアルゴリズムを利用して瓶詰めを行う
-    /// Bottom-Left Algorithm
+    /// Bottom-Left Algorithm を利用して 箱詰めを行う
     /// </summary>
-    public class WaitCoverSearch : CustomYieldInstruction
+    public class WaitPackingSearch : CustomYieldInstruction
     {
         public override bool keepWaiting => _wait;
 
-        public CoverResult Result => _result;
-        private CoverResult _result; 
+        public PackingResult Result => _result;
+        private PackingResult _result; 
         
         public const int EMPTY = -1;
 
@@ -22,7 +20,7 @@ namespace Yorozu
         private Vector2Int _size;
         private bool _wait;
         
-        public WaitCoverSearch(int width, int height, IEnumerable<int[,]> shapes)
+        public WaitPackingSearch(int width, int height, IEnumerable<int[,]> shapes)
         {
             SetData(width, height, shapes.Select(Convert));
             bool[,] Convert(int[,] shape)
@@ -40,7 +38,7 @@ namespace Yorozu
             }
         }
 
-        public WaitCoverSearch(int width, int height, IEnumerable<bool[,]> shapes)
+        public WaitPackingSearch(int width, int height, IEnumerable<bool[,]> shapes)
         {
             SetData(width, height, shapes);
         }
@@ -70,7 +68,7 @@ namespace Yorozu
             
             search.Process(parallel, SearchFinish);
             
-            void SearchFinish(CoverResult result)
+            void SearchFinish(PackingResult result)
             {
                 _result = result;
                 _wait = false;   

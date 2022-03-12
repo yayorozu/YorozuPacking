@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Yorozu
 {
-    public class CoverResult : IPrint
+    public class PackingResult : IPrint
     {
         int[,] IPrint.Map => SuccessMap;
             
@@ -14,7 +14,7 @@ namespace Yorozu
         /// </summary>
         public int CalcMilliseconds { get; }
 
-        public CoverResult(bool success, int[,] successMap, int calcMilliseconds, IEnumerable<Log> logs)
+        public PackingResult(bool success, int[,] successMap, int calcMilliseconds, IEnumerable<Log> logs)
         {
             Success = success;
             SuccessMap = successMap;

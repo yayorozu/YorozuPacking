@@ -39,12 +39,12 @@ namespace Yorozu
         /// <summary>
         /// 再帰的に探索開始
         /// </summary>
-        internal void Process(bool isParallel, Action<CoverResult> endCallback)
+        internal void Process(bool isParallel, Action<PackingResult> endCallback)
         {
             _ = ProcessImpl(isParallel, endCallback);
         }
 
-        private async Task ProcessImpl(bool isParallel, Action<CoverResult> callback)
+        private async Task ProcessImpl(bool isParallel, Action<PackingResult> callback)
         {
             var begin = DateTime.Now;
             var source = new CancellationTokenSource();
@@ -56,7 +56,7 @@ namespace Yorozu
             var elapsedTime = (DateTime.Now - begin).Milliseconds;
 
             // 結果をセット
-            var result = new CoverResult(_successMap != null, _successMap, elapsedTime, _logs);
+            var result = new PackingResult(_successMap != null, _successMap, elapsedTime, _logs);
 
             callback.Invoke(result);
         }
