@@ -9,8 +9,7 @@ namespace Yorozu
         /// <summary>
         /// 有効な座標
         /// </summary>
-        private HashSet<Vector2Int> _validPosition;
-        
+        private List<Vector2Int> _validPosition;
         /// <summary>
         /// サイズ
         /// </summary>
@@ -26,11 +25,12 @@ namespace Yorozu
         /// 配置した場合の全パターン
         /// </summary>
         private List<Vector2Int[]> _maps;
+        
         internal IEnumerable<Vector2Int[]> Maps => _maps;
         /// <summary>
         /// 個数
         /// </summary>
-        internal int Amount => _validPosition.Count();
+        internal int Amount => _validPosition.Count;
 
         internal ItemData(bool[,] shape, Vector2Int size)
         {
@@ -44,7 +44,7 @@ namespace Yorozu
         /// <param name="shape"></param>
         private void CacheValidPosition(bool[,] shape)
         {
-            _validPosition = new HashSet<Vector2Int>(shape.Length);
+            _validPosition = new List<Vector2Int>(shape.Length);
             for (var x = 0; x < shape.GetLength(0); x++)
             {
                 for (var y = 0; y < shape.GetLength(1); y++)
@@ -54,6 +54,17 @@ namespace Yorozu
 
                     _validPosition.Add(new Vector2Int(x, y));
                 }
+            }
+
+            // 上下が空白であることを考慮する
+            var minX = _validPosition.Min(v => v.x);
+            var minY = _validPosition.Min(v => v.y);
+            for (var i = 0; i < _validPosition.Count; i++)
+            {
+                _validPosition[i] = new Vector2Int(
+                    _validPosition[i].x - minX, 
+                    _validPosition[i].y - minY
+                );
             }
         }
 
