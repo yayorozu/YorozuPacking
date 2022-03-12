@@ -1,24 +1,24 @@
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace Yorozu
 {
-    public class CoverResult : CustomYieldInstruction, IPrint
+    public class CoverResult : IPrint
     {
         int[,] IPrint.Map => SuccessMap;
             
         public bool Success { get; }
         public int[,] SuccessMap { get; }
         public IEnumerable<Log> Logs { get; }
+        /// <summary>
+        /// 計算時間
+        /// </summary>
+        public int Milliseconds { get; }
 
-        public CoverResult(bool success, int[,] successMap)
+        public CoverResult(bool success, int[,] successMap, int milliseconds, IEnumerable<Log> logs)
         {
             Success = success;
             SuccessMap = successMap;
-        }
-            
-        public CoverResult(bool success, int[,] successMap, IEnumerable<Log> logs) : this(success, successMap)
-        {
+            Milliseconds = milliseconds;
             Logs = logs;
         }
 
@@ -26,7 +26,5 @@ namespace Yorozu
         {
             return this.Print();
         }
-
-        public override bool keepWaiting { get; }
     }
 }

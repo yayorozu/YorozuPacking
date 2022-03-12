@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -10,7 +9,7 @@ namespace Yorozu
     /// 瓶詰め詰めアルゴリズムを利用して瓶詰めを行う
     /// Bottom-Left Algorithm
     /// </summary>
-    public class WaitCover : CustomYieldInstruction
+    public class WaitCoverSearch : CustomYieldInstruction
     {
         public override bool keepWaiting => _wait;
 
@@ -22,8 +21,8 @@ namespace Yorozu
         private ItemData[] _data;
         private Vector2Int _size;
         private bool _wait;
-
-        public WaitCover(int width, int height, IEnumerable<int[,]> shapes)
+        
+        public WaitCoverSearch(int width, int height, IEnumerable<int[,]> shapes)
         {
             SetData(width, height, shapes.Select(Convert));
             bool[,] Convert(int[,] shape)
@@ -41,7 +40,7 @@ namespace Yorozu
             }
         }
 
-        public WaitCover(int width, int height, IEnumerable<bool[,]> shapes)
+        public WaitCoverSearch(int width, int height, IEnumerable<bool[,]> shapes)
         {
             SetData(width, height, shapes);
         }
@@ -57,30 +56,26 @@ namespace Yorozu
                 _data[i] = new ItemData(shapes.ElementAt(i), _size);
             }   
         }
-        
-        /// <summary>
-        /// 探索開始
-        /// </summary>
-        public void Evaluate()
-        {
-            Evaluate(-1);
-        }
-        
+
         /// <summary>
         /// 探索開始
         /// 見つからなかった場合は指定した値以下の空き結果を記録して返す
         /// </summary>
+        /// <param name="parallel"></param>
         /// <param name="logScore"></param>
         /// <returns></returns>
-        public void Evaluate(int logScore)
+        public void Evaluate(bool parallel = false, int logScore = -1)
         {
             _wait = true;
             var search = new Searcher(_size, _data, logScore);
-            search.Process(success =>
+            
+            search.Process(parallel, SearchFinish);
+            
+            void SearchFinish(bool success)
             {
-                _result = new CoverResult(success, search.SuccessMap, search.Logs);
-                _wait = false;
-            });
+                _result = new CoverResult(success, search.SuccessMap, 0, search.Logs);
+                _wait = false;   
+            }
         }
     }
 }

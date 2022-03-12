@@ -41,40 +41,57 @@ namespace Yorozu
         /// <summary>
         /// 再帰的に探索開始
         /// </summary>
-        internal void Process(Action<bool> callback)
+        internal void Process(bool isParallel, Action<bool> callback)
         {
-            _ = ProcessImpl(callback);
+            _ = ProcessImpl(isParallel, callback);
         }
 
-        private Task ProcessImpl(Action<bool> callback)
+        private async Task ProcessImpl(bool isParallel, Action<bool> callback)
         {
             var source = new CancellationTokenSource();
+            if (isParallel)
+                await Parallel(source);
+            else
+                await Sequence(source);
+
+            callback.Invoke(SuccessMap != null);
+        }
+
+        /// <summary>
+        /// 並列検索
+        /// </summary>
+        private async Task Parallel(CancellationTokenSource source)
+        {
             var tasks = new List<Task>();
 
             for (var i = 0; i < data.Length; i++)
             {
                 tasks.Add(SearchTask(i, source));
             }
-
-            var allTask = Task.WhenAll(tasks);
-
             try
             {
-                allTask.Wait(source.Token);
+                await Task.WhenAll(tasks);
             }
-            catch
-            {
-                // ignored
-            }
+            catch {}
+        }
 
-            callback.Invoke(SuccessMap != null);
-            return Task.CompletedTask;
+        /// <summary>
+        /// 逐次検索
+        /// </summary>
+        private async Task Sequence(CancellationTokenSource source)
+        {
+            for (var i = 0; i < data.Length; i++)
+            {
+                var success = await SearchTask(i, source);
+                if (success)
+                    return;
+            }
         }
 
         /// <summary>
         /// 非同期で一気に投げる
         /// </summary>
-        private Task SearchTask(int startIndex, CancellationTokenSource source)
+        private Task<bool> SearchTask(int startIndex, CancellationTokenSource source)
         {
             var indexes = new List<int>(data.Length);
             for (var i = 0; i < data.Length; i++) 
@@ -89,7 +106,7 @@ namespace Yorozu
                 SuccessMap = node.CurrentMap;
             }
 
-            return Task.CompletedTask;
+            return Task.FromResult(success);
         }
 
         /// <summary>
