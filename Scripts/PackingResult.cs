@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Yorozu
 {
@@ -26,9 +27,30 @@ namespace Yorozu
 
         }
 
-        public string SuccessMapString()
+        public override string ToString()
         {
-            return this.Print();
+            var builder = new StringBuilder();
+            builder.AppendLine($"[{nameof(PackingResult)}]");
+            builder.AppendLine($"Success: {Success}");
+            builder.AppendLine($"SuccessSearchCount : {_successMaps.Count}");
+            builder.AppendLine($"CalcMilliseconds : {CalcMilliseconds}ms");
+            if (Success)
+            {
+                builder.AppendLine($"SuccessMap: ");
+                builder.Append($"{this.Print()}");
+                builder.AppendLine($"------------------------------------------------");
+            }
+            if (Logs.Any())
+            {
+                builder.AppendLine($"Logs");
+                foreach (var log in Logs)
+                {
+                    builder.AppendLine($"{log}");
+                    builder.AppendLine($"------------------------------------------------");
+                }
+            }
+            
+            return builder.ToString();
         }
     }
 }
