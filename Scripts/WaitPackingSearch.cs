@@ -60,13 +60,14 @@ namespace Yorozu
         /// </summary>
         /// <param name="parallel"></param>
         /// <param name="logScore"></param>
+        /// <param name="all">正解が見つかっても全部パターン探索する</param>
         /// <returns></returns>
-        public void Evaluate(bool parallel = false, int logScore = -1)
+        public void Evaluate(bool parallel = false, int logScore = -1, bool all = false)
         {
             _wait = true;
             var search = new Searcher(_size, _data, logScore);
             
-            search.Process(parallel, SearchFinish);
+            search.Process(parallel, all, SearchFinish);
             
             void SearchFinish(PackingResult result)
             {

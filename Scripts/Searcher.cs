@@ -17,8 +17,9 @@ namespace Yorozu
 
         private int _minAmount;
         private int _logScore;
-        private int[,] _successMap;
+        private List<int[,]> _successMaps;
         private List<Log> _logs;
+        private bool _all;
         
         /// <summary>
         /// コンストラクタ
@@ -33,15 +34,17 @@ namespace Yorozu
             _logScore = logScore;
             
             _minAmount = data.Max(d => d.Amount);
+            _successMaps = new List<int[,]>();
             _logs = new List<Log>();
         }
 
         /// <summary>
         /// 再帰的に探索開始
         /// </summary>
-        internal void Process(bool isParallel, Action<PackingResult> endCallback)
+        internal void Process(bool parallel, bool all, Action<PackingResult> endCallback)
         {
-            _ = ProcessImpl(isParallel, endCallback);
+            _all = all;
+            _ = ProcessImpl(parallel, endCallback);
         }
 
         private async Task ProcessImpl(bool isParallel, Action<PackingResult> callback)
@@ -56,7 +59,7 @@ namespace Yorozu
             var elapsedTime = (DateTime.Now - begin).Milliseconds;
 
             // 結果をセット
-            var result = new PackingResult(_successMap != null, _successMap, elapsedTime, _logs);
+            var result = new PackingResult(_successMaps, elapsedTime, _logs);
 
             callback.Invoke(result);
         }
@@ -87,7 +90,7 @@ namespace Yorozu
             for (var i = 0; i < data.Length; i++)
             {
                 var success = await SearchTask(i, source);
-                if (success)
+                if (success && !_all)
                     return;
             }
         }
@@ -106,8 +109,12 @@ namespace Yorozu
             if (success)
             {
                 // 見つかったら止める
-                source.Cancel();
-                _successMap = node.CurrentMap;
+                if (!_all)
+                {
+                    source.Cancel();
+                }
+
+                _successMaps.Add(node.CurrentMap.Copy());
             }
 
             return Task.FromResult(success);
