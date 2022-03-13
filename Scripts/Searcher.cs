@@ -118,7 +118,7 @@ namespace Yorozu
         /// </summary>
         internal void AddLog(Box box)
         {
-            if (_logScore < 0 || box.EmptyCount() == 0 || box.EmptyCount() > _logScore) 
+            if (_logScore < 0 || box.EmptyCount() > _logScore) 
                 return;
             
             _logs.Add(new Log(box.Copy(), box.EmptyCount()));

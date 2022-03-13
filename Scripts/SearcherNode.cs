@@ -33,8 +33,8 @@ namespace Yorozu
             if (token.IsCancellationRequested)
                 return false;
             
-            // 全部置いた
-            if (_unusedHash.Count <= 0)
+            // 全部置いた もしくは全部埋めた
+            if (_unusedHash.Count <= 0 || _box.EmptyCount() == 0)
                 return true;
             
             _owner.AddLog(_box);
