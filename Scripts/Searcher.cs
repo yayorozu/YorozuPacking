@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine;
 
 namespace Yorozu
 {
@@ -12,28 +10,25 @@ namespace Yorozu
     /// </summary>
     internal class Searcher
     {
-        internal Vector2Int size { get; }
-        internal ItemData[] data { get; }
+        internal ItemData[] data => _owner.data;
 
-        private int _minAmount;
-        private int _logScore;
+        private WaitPackingSearch _owner;
+        
         private List<int[,]> _successMaps;
         private List<Log> _logs;
-        private bool _all;
         
+        private int _logScore;
+        private bool _all;
+
         /// <summary>
         /// コンストラクタ
         /// </summary>
-        /// <param name="size"></param>
-        /// <param name="data"></param>
-        /// <param name="logScore"></param>
-        internal Searcher(Vector2Int size, ItemData[] data, int logScore = -1)
+        public Searcher(WaitPackingSearch owner, int logScore, bool all)
         {
-            this.size = size;
-            this.data = data;
+            _owner = owner;
             _logScore = logScore;
+            _all = all;
             
-            _minAmount = data.Max(d => d.Amount);
             _successMaps = new List<int[,]>();
             _logs = new List<Log>();
         }
@@ -41,9 +36,8 @@ namespace Yorozu
         /// <summary>
         /// 再帰的に探索開始
         /// </summary>
-        internal void Process(bool parallel, bool all, Action<PackingResult> endCallback)
+        internal void Process(bool parallel, Action<PackingResult> endCallback)
         {
-            _all = all;
             _ = ProcessImpl(parallel, endCallback);
         }
 
@@ -104,7 +98,7 @@ namespace Yorozu
             for (var i = 0; i < data.Length; i++) 
                 indexes.Add((startIndex + i) % data.Length);
             
-            var node = new SearcherNode(this, indexes);
+            var node = new SearcherNode(this, new Box(_owner), indexes);
             var success = node.ProcessRecursive(source.Token);
             if (success)
             {
@@ -137,7 +131,7 @@ namespace Yorozu
         internal bool Continuable(Box box)
         {
             // 空き領域が最小サイズより少ない場合は置けない
-            if (box.EmptyCount() < _minAmount) 
+            if (box.EmptyCount() < _owner.minAmount) 
                 return false;
 
             return true;

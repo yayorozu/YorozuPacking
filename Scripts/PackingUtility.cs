@@ -1,7 +1,16 @@
 namespace Yorozu
 {
-    internal static class PackingUtility
+    public static class PackingUtility
     {
+        /// <summary>
+        /// 空
+        /// </summary>
+        public const int EMPTY = -1;
+        /// <summary>
+        /// 無効領域
+        /// </summary>
+        public const int INVALID = -2;
+
         internal static string Print(this IPrint print)
         {
             if (print.Map == null)
@@ -12,13 +21,17 @@ namespace Yorozu
             {
                 for (var x = 0; x < print.Map.GetLength(0); x++)
                 {
-                    if (print.Map[x, y] >= 0)
+                    if (print.Map[x, y] == EMPTY)
                     {
-                        builder.Append($"\t{print.Map[x, y]}, ");    
+                        builder.Append($"\t*, ");
+                    }
+                    else if (print.Map[x, y] == INVALID)
+                    {
+                        builder.Append($"\t#, ");
                     }
                     else
                     {
-                        builder.Append($"\t , ");
+                        builder.Append($"\t{print.Map[x, y]}, ");    
                     }
                 }
 

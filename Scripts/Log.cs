@@ -2,16 +2,13 @@ namespace Yorozu
 {
     public class Log : IPrint
     {
-        private int[,] _map;
-        private int _empty;
-        
-        public int[,] Map => _map;
-        public int EmptyCount => _empty; 
+        public int[,] Map { get; }
+        public int EmptyCount  { get; } 
 
         internal Log(int[,] map, int empty)
         {
-            _map = map;
-            _empty = empty;
+            Map = map;
+            EmptyCount = empty;
         }
         
         public override string ToString()

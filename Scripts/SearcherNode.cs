@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using UnityEngine;
 
 namespace Yorozu
 {
@@ -16,10 +15,10 @@ namespace Yorozu
         
         internal int[,] CurrentMap => _box.Map;
 
-        internal SearcherNode(Searcher owner, List<int> indexes)
+        internal SearcherNode(Searcher owner, Box box, List<int> indexes)
         {
             _owner = owner;
-            _box = new Box(owner.size);
+            _box = box;
             _unusedHash = indexes;
         }
 

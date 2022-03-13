@@ -14,15 +14,16 @@ namespace Yorozu
         public PackingResult Result => _result;
         private PackingResult _result; 
         
-        public const int EMPTY = -1;
-
-        private ItemData[] _data;
-        private Vector2Int _size;
+        internal ItemData[] data { get; private set; }
+        internal Vector2Int size { get; private set; }
+        internal IList<Vector2Int> invalidPositions { get; private set; }
+        internal int minAmount { get; private set; }
+        
         private bool _wait;
         
-        public WaitPackingSearch(int width, int height, IEnumerable<int[,]> shapes)
+        public WaitPackingSearch(int width, int height, IEnumerable<int[,]> shapes, IList<Vector2Int> invalidPositions = null)
         {
-            SetData(width, height, shapes.Select(Convert));
+            SetData(width, height, shapes.Select(Convert), invalidPositions);
             bool[,] Convert(int[,] shape)
             {
                 var boolShape = new bool[shape.GetLength(0), shape.GetLength(1)];
@@ -38,20 +39,30 @@ namespace Yorozu
             }
         }
 
-        public WaitPackingSearch(int width, int height, IEnumerable<bool[,]> shapes)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="shapes"></param>
+        /// <param name="invalidPositions">使えない領域リスト</param>
+        public WaitPackingSearch(int width, int height, IEnumerable<bool[,]> shapes, IList<Vector2Int> invalidPositions = null)
         {
-            SetData(width, height, shapes);
+            SetData(width, height, shapes, invalidPositions);
         }
-
-        private void SetData(int width, int height, IEnumerable<bool[,]> shapes)
+        
+        private void SetData(int width, int height, IEnumerable<bool[,]> shapes, IList<Vector2Int> invalidPositions)
         {
-            _size = new Vector2Int(width, height);
-            _data = shapes
-                .Select((v, i) => new ItemData(v, _size, i))
+            size = new Vector2Int(width, height);
+            data = shapes
+                .Select((v, i) => new ItemData(v, size, i))
                 // スコア順にソートしたほうが遅いt
                 //.OrderByDescending(d => d.Score)
-                .ToArray();
+                .ToArray()
             ;
+
+            minAmount = data.Max(d => d.Amount);
+            this.invalidPositions = invalidPositions;
         }
 
         /// <summary>
@@ -65,9 +76,9 @@ namespace Yorozu
         public void Evaluate(bool parallel = false, int logScore = -1, bool all = false)
         {
             _wait = true;
-            var search = new Searcher(_size, _data, logScore);
+            var search = new Searcher(this, logScore, all);
             
-            search.Process(parallel, all, SearchFinish);
+            search.Process(parallel, SearchFinish);
             
             void SearchFinish(PackingResult result)
             {

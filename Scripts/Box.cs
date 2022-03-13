@@ -13,14 +13,24 @@ namespace Yorozu
         internal int[,] Map => _map;
         int[,] IPrint.Map => _map;
         
-        internal Box(Vector2Int size)
+        internal Box(WaitPackingSearch owner)
         {
+            var size = owner.size;
+            var invalids = owner.invalidPositions;
             _map = new int[size.x, size.y];
             for (var x = 0; x < size.x; x++)
             {
                 for (var y = 0; y < size.y; y++)
                 {
-                    _map[x, y] = WaitPackingSearch.EMPTY;
+                    // 無効領域であれば無効データをセット
+                    if (invalids != null && invalids.Contains(new Vector2Int(x, y)))
+                    {
+                        _map[x, y] = PackingUtility.INVALID;    
+                    }
+                    else
+                    {
+                        _map[x, y] = PackingUtility.EMPTY;
+                    }
                 }
             }
 
@@ -29,7 +39,7 @@ namespace Yorozu
 
         internal bool Valid(Vector2Int point)
         {
-            return _map[point.x, point.y] == WaitPackingSearch.EMPTY;
+            return _map[point.x, point.y] == PackingUtility.EMPTY;
         }
 
         /// <summary>
@@ -51,7 +61,7 @@ namespace Yorozu
         {
             foreach (var point in points)
             {
-                _map[point.x, point.y] = WaitPackingSearch.EMPTY;
+                _map[point.x, point.y] = PackingUtility.EMPTY;
             }
 
             _empty += points.Length;
