@@ -38,7 +38,7 @@ namespace Yorozu
         /// </summary>
         internal void Process(bool parallel, Action<PackingResult> endCallback)
         {
-            _ = ProcessImpl(parallel, endCallback);
+            _ = Task.Run(() => ProcessImpl(parallel, endCallback));
         }
 
         private async Task ProcessImpl(bool isParallel, Action<PackingResult> callback)
