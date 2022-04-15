@@ -1,5 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Yorozu
@@ -12,18 +15,22 @@ namespace Yorozu
         public override bool keepWaiting => _wait;
 
         public PackingResult Result => _result;
-        private PackingResult _result; 
         
-        internal ItemData[] data { get; private set; }
+        private PackingResult _result;
+
+        internal IEnumerable<bool[,]> shapes { get; private set; }
         internal Vector2Int size { get; private set; }
         internal IList<Vector2Int> invalidPositions { get; private set; }
-        internal int minAmount { get; private set; }
-        
+        internal int logScore { get; private set; }
+        internal bool all { get; private set; }
+        internal int allowCount { get; private set; }
+
+        private bool parallel;
         private bool _wait;
         
-        public WaitPackingSearch(int width, int height, IEnumerable<int[,]> shapes, IList<Vector2Int> invalidPositions = null)
+        public WaitPackingSearch(int width, int height, IEnumerable<int[,]> shapes)
         {
-            SetData(width, height, shapes.Select(Convert), invalidPositions);
+            SetData(width, height, shapes.Select(Convert));
             bool[,] Convert(int[,] shape)
             {
                 var boolShape = new bool[shape.GetLength(0), shape.GetLength(1)];
@@ -45,46 +52,95 @@ namespace Yorozu
         /// <param name="width"></param>
         /// <param name="height"></param>
         /// <param name="shapes"></param>
-        /// <param name="invalidPositions">使えない領域リスト</param>
-        public WaitPackingSearch(int width, int height, IEnumerable<bool[,]> shapes, IList<Vector2Int> invalidPositions = null)
+        public WaitPackingSearch(int width, int height, IEnumerable<bool[,]> shapes)
         {
-            SetData(width, height, shapes, invalidPositions);
+            SetData(width, height, shapes);
         }
         
-        private void SetData(int width, int height, IEnumerable<bool[,]> shapes, IList<Vector2Int> invalidPositions)
+        private void SetData(int width, int height, IEnumerable<bool[,]> shapes)
         {
             size = new Vector2Int(width, height);
-            data = shapes
-                .Select((v, i) => new ItemData(v, size, i))
-                // スコア順にソートしたほうが遅いt
-                //.OrderByDescending(d => d.Score)
-                .ToArray()
-            ;
-
-            minAmount = data.Max(d => d.Amount);
-            this.invalidPositions = invalidPositions;
+            this.shapes = shapes;
         }
-
+        
         /// <summary>
         /// 探索開始
         /// 見つからなかった場合は指定した値以下の空き結果を記録して返す
         /// </summary>
-        /// <param name="parallel"></param>
-        /// <param name="logScore"></param>
-        /// <param name="all">正解が見つかっても全部パターン探索する</param>
-        /// <returns></returns>
-        public void Evaluate(bool parallel = false, int logScore = -1, bool all = false)
+        public void Evaluate(Algorithm algorithm)
         {
             _wait = true;
-            var search = new Searcher(this, logScore, all);
             
-            search.Process(parallel, SearchFinish);
-            
-            void SearchFinish(PackingResult result)
+            _ = Task.Run(Process);
+
+            async Task Process()
             {
-                _result = result;
-                _wait = false;   
+                var source = new CancellationTokenSource();
+                var searcher = GetSearcher(algorithm);
+                _result = await searcher.Process(parallel, source);
+                _wait = false;
             }
+        }
+
+        private SearcherAbstract GetSearcher(Algorithm algorithm)
+        {
+            return algorithm switch
+            {
+                Algorithm.BottomLeft => new BottomLeftSearcher(this, algorithm),
+                Algorithm.LeftBottom => new BottomLeftSearcher(this, algorithm),
+                _ => throw new ArgumentOutOfRangeException(nameof(algorithm), algorithm, null)
+            };
+        }
+        
+        // ----------
+        // Options
+        // -----------
+
+        /// <summary>
+        /// 無効エリアの定義
+        /// </summary>
+        public WaitPackingSearch SetInValidPosition(IList<Vector2Int> invalidPositions)
+        {
+            this.invalidPositions = invalidPositions;
+            return this;
+        }
+
+        /// <summary>
+        /// 並列に計算するオプション
+        /// </summary>
+        /// <returns></returns>
+        public WaitPackingSearch SetParallel()
+        {
+            parallel = true;
+            return this;
+        }
+        
+        /// <summary>
+        /// ログを有効にする空き数
+        /// </summary>
+        public WaitPackingSearch SetLogScore(int score)
+        {
+            logScore = score;
+            return this;
+        }
+        
+        /// <summary>
+        /// 計算が終わるまで回す
+        /// </summary>
+        public WaitPackingSearch SetAllFind()
+        {
+            all = true;
+            return this;
+        }
+
+        /// <summary>
+        /// 空きの許容範囲
+        /// </summary>
+        /// <returns></returns>
+        public WaitPackingSearch SetAllowEmptyCount(int count)
+        {
+            allowCount = Mathf.Max(0, count);
+            return this;
         }
     }
 }

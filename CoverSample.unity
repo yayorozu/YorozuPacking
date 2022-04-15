@@ -152,8 +152,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c7ee224f1e2ae4e148cc77d710fd5c72, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _width: 6
-  _height: 6
+  _width: 7
+  _height: 7
   _boolMatrix:
   - _elements: 010100010001
     _column: 2
@@ -161,15 +161,13 @@ MonoBehaviour:
     _column: 2
   - _elements: 010101000100
     _column: 2
-  - _elements: 010101010000000000000000
-    _column: 4
+  - _elements: 010101010100000000000000000000
+    _column: 5
   - _elements: 000001010000000100000001
     _column: 4
-  - _elements: 010101010001000000000000
+  - _elements: 010101010000000000000000
     _column: 4
-  - _elements: 010100000101000001000000
-    _column: 4
-  - _elements: 010000000000000000000000
+  - _elements: 000100000101000001000000
     _column: 4
   - _elements: 010000000100000000000000
     _column: 4

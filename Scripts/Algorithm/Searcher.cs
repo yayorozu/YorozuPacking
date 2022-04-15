@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -8,26 +9,18 @@ namespace Yorozu
     /// <summary>
     /// 解を求める
     /// </summary>
-    internal class Searcher
+    internal abstract class SearcherAbstract
     {
-        internal ItemData[] data => _owner.data;
-
-        private WaitPackingSearch _owner;
-        
-        private List<int[,]> _successMaps;
+        protected WaitPackingSearch _owner;
+        protected List<int[,]> _successMaps;
         private List<Log> _logs;
         
-        private int _logScore;
-        private bool _all;
-
         /// <summary>
         /// コンストラクタ
         /// </summary>
-        public Searcher(WaitPackingSearch owner, int logScore, bool all)
+        internal SearcherAbstract(WaitPackingSearch owner)
         {
             _owner = owner;
-            _logScore = logScore;
-            _all = all;
             
             _successMaps = new List<int[,]>();
             _logs = new List<Log>();
@@ -36,16 +29,10 @@ namespace Yorozu
         /// <summary>
         /// 再帰的に探索開始
         /// </summary>
-        internal void Process(bool parallel, Action<PackingResult> endCallback)
-        {
-            _ = Task.Run(() => ProcessImpl(parallel, endCallback));
-        }
-
-        private async Task ProcessImpl(bool isParallel, Action<PackingResult> callback)
+        internal async Task<PackingResult> Process(bool parallel, CancellationTokenSource source)
         {
             var begin = DateTime.Now;
-            var source = new CancellationTokenSource();
-            if (isParallel)
+            if (parallel)
                 await Parallel(source);
             else
                 await Sequence(source);
@@ -55,7 +42,7 @@ namespace Yorozu
             // 結果をセット
             var result = new PackingResult(_successMaps, elapsedTime, _logs);
 
-            callback.Invoke(result);
+            return result;
         }
 
         /// <summary>
@@ -65,7 +52,7 @@ namespace Yorozu
         {
             var tasks = new List<Task>();
 
-            for (var i = 0; i < data.Length; i++)
+            for (var i = 0; i < _owner.shapes.Count(); i++)
             {
                 tasks.Add(SearchTask(i, source));
             }
@@ -81,60 +68,36 @@ namespace Yorozu
         /// </summary>
         private async Task Sequence(CancellationTokenSource source)
         {
-            for (var i = 0; i < data.Length; i++)
+            for (var i = 0; i < _owner.shapes.Count(); i++)
             {
                 var success = await SearchTask(i, source);
-                if (success && !_all)
+                if (success && !_owner.all)
                     return;
             }
         }
+
+        protected abstract AlgorithmNode GetNode(int startIndex);
 
         /// <summary>
         /// 非同期で一気に投げる
         /// </summary>
         private Task<bool> SearchTask(int startIndex, CancellationTokenSource source)
         {
-            var indexes = new List<int>(data.Length);
-            for (var i = 0; i < data.Length; i++) 
-                indexes.Add((startIndex + i) % data.Length);
-            
-            var node = new SearcherNode(this, new Box(_owner), indexes);
-            var success = node.ProcessRecursive(source.Token);
+            var node = GetNode(startIndex);
+            var success = node.Process(source.Token);
             if (success)
             {
                 // 見つかったら止める
-                if (!_all)
+                if (!_owner.all)
                 {
                     source.Cancel();
                 }
 
                 _successMaps.Add(node.CurrentMap.Copy());
             }
+            _logs.AddRange(node.Logs);
 
             return Task.FromResult(success);
-        }
-
-        /// <summary>
-        /// ログ追加
-        /// </summary>
-        internal void AddLog(Box box)
-        {
-            if (_logScore < 0 || box.EmptyCount() > _logScore) 
-                return;
-            
-            _logs.Add(new Log(box.Copy(), box.EmptyCount()));
-        }
-        
-        /// <summary>
-        /// 現在の状態で埋めを継続できるか確認する
-        /// </summary>
-        internal bool Continuable(Box box)
-        {
-            // 空き領域が最小サイズより少ない場合は置けない
-            if (box.EmptyCount() < _owner.minAmount) 
-                return false;
-
-            return true;
         }
     }
 }
