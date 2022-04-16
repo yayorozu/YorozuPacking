@@ -84,16 +84,16 @@ namespace Yorozu
         private Task<bool> SearchTask(int startIndex, CancellationTokenSource source)
         {
             var node = GetNode(startIndex);
-            var success = node.Process(source.Token);
+            
+            node.Process(source.Token);
+            var success = node.SuccessMap.Any();
+            // 見つかったら止める
             if (success)
             {
-                // 見つかったら止める
+                _successMaps.AddRange(node.SuccessMap);
+                
                 if (!_owner.all)
-                {
                     source.Cancel();
-                }
-
-                _successMaps.Add(node.CurrentMap.Copy());
             }
             _logs.AddRange(node.Logs);
 

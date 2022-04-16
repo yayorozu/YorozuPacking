@@ -8,23 +8,23 @@ namespace Yorozu
     /// <summary>
     /// Bottom Left 法
     /// </summary>
-    internal class BottomTopAlgorithm : AlgorithmNode
+    internal class BottomLeftAlgorithm : AlgorithmNode
     {
-        private IReadOnlyList<BottomTopItemData> _data;
+        private IReadOnlyList<BottomLeftItemData> _data;
         /// <summary>
         /// 許容空き数
         /// </summary>
         private readonly int _maxSize;
 
-        public BottomTopAlgorithm(WaitPackingSearch option, int startIndex, BottomTopItemData[] data) : base(option, startIndex)
+        public BottomLeftAlgorithm(WaitPackingSearch option, int startIndex, BottomLeftItemData[] data) : base(option, startIndex)
         {
             _data = data;
             _maxSize = data.Max(d => d.Amount);
         }
 
-        internal override bool Process(CancellationToken token)
+        internal override void Process(CancellationToken token)
         {
-            return ProcessRecursive(token);
+            ProcessRecursive(token);
         }
 
         /// <summary>
@@ -38,8 +38,11 @@ namespace Yorozu
             
             // 全部置いた もしくは全部埋めた
             if (_unusedStack.Count <= 0 || _box.EmptyCount() <= allowCount)
+            {
+                AddSuccessLog();
                 return true;
-            
+            }
+
             AddLog(_box);
 
             if (!Continuable(_box))
@@ -62,7 +65,7 @@ namespace Yorozu
                 
                 // 置けたら次をチェック
                 if (ProcessRecursive(token))
-                    return true;
+                    return !all;
                 
                 // 見つからなかったので今置いたやつを戻して次を探す
                 _box.Reset(points);

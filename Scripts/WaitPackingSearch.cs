@@ -67,7 +67,7 @@ namespace Yorozu
         /// 探索開始
         /// 見つからなかった場合は指定した値以下の空き結果を記録して返す
         /// </summary>
-        public void Evaluate(Algorithm algorithm)
+        public void Evaluate(Algorithm algorithm = Algorithm.BottomLeft)
         {
             _wait = true;
             
@@ -76,6 +76,16 @@ namespace Yorozu
             async Task Process()
             {
                 var source = new CancellationTokenSource();
+#if UNITY_EDITOR
+                UnityEditor.EditorApplication.playModeStateChanged += change =>
+                {
+                    if (change == UnityEditor.PlayModeStateChange.ExitingPlayMode)
+                    {
+                        if (source != null)
+                            source.Cancel();
+                    }
+                };
+#endif
                 var searcher = GetSearcher(algorithm);
                 _result = await searcher.Process(parallel, source);
                 _wait = false;

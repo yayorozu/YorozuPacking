@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Yorozu
 {
-    internal class BottomTopItemData : ItemData
+    internal class BottomLeftItemData : ItemData
     {
         /// <summary>
         /// 配置した場合の全パターン
@@ -12,7 +12,7 @@ namespace Yorozu
         
         internal IEnumerable<Vector2Int[]> Maps => _maps;
         
-        public BottomTopItemData(bool[,] shape, Vector2Int size, int index, Algorithm algorithm) : base(shape, size, index)
+        public BottomLeftItemData(bool[,] shape, Vector2Int size, int index, Algorithm algorithm) : base(shape, size, index)
         {
             _maps = new List<Vector2Int[]>();
             // 配置の全パターンをキャッシュ
