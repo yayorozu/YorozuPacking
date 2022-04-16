@@ -7,11 +7,13 @@ namespace Yorozu
     /// </summary>
     internal class Box : IPrint
     {
+        int[,] IPrint.Map => _map;
+        
         private int[,] _map;
         private int _empty;
 
         internal int[,] Map => _map;
-        int[,] IPrint.Map => _map;
+        internal Vector2Int Size => new Vector2Int(_map.GetLength(0), _map.GetLength(1));
         
         internal Box(WaitPackingSearch owner)
         {
@@ -45,11 +47,11 @@ namespace Yorozu
         /// <summary>
         /// 置き状態に
         /// </summary>
-        internal void Put(Vector2Int[] points, int index)
+        internal void Put(Vector2Int[] points, int index, Vector2Int offset = new Vector2Int())
         {
             foreach (var point in points)
             {
-                _map[point.x, point.y] = index;
+                _map[point.x + offset.x, point.y + offset.y] = index;
             }
             _empty -= points.Length;
         }
@@ -57,11 +59,11 @@ namespace Yorozu
         /// <summary>
         /// もとに戻す
         /// </summary>
-        internal void Reset(Vector2Int[] points)
+        internal void Reset(Vector2Int[] points, Vector2Int offset = new Vector2Int())
         {
             foreach (var point in points)
             {
-                _map[point.x, point.y] = PackingUtility.EMPTY;
+                _map[point.x + offset.x, point.y + offset.y] = PackingUtility.EMPTY;
             }
 
             _empty += points.Length;
