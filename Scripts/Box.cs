@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Yorozu
@@ -14,28 +16,14 @@ namespace Yorozu
 
         internal int[,] Map => _map;
         internal Vector2Int Size => new Vector2Int(_map.GetLength(0), _map.GetLength(1));
+        private IList<Vector2Int> _invalids;
         
         internal Box(WaitPackingSearch owner)
         {
             var size = owner.size;
-            var invalids = owner.invalidPositions;
+            _invalids = owner.invalidPositions;
             _map = new int[size.x, size.y];
-            for (var x = 0; x < size.x; x++)
-            {
-                for (var y = 0; y < size.y; y++)
-                {
-                    // 無効領域であれば無効データをセット
-                    if (invalids != null && invalids.Contains(new Vector2Int(x, y)))
-                    {
-                        _map[x, y] = PackingUtility.INVALID;    
-                    }
-                    else
-                    {
-                        _map[x, y] = PackingUtility.EMPTY;
-                    }
-                }
-            }
-
+            Clear();
             _empty = size.x * size.y;
         }
 
@@ -47,26 +35,42 @@ namespace Yorozu
         /// <summary>
         /// 置き状態に
         /// </summary>
-        internal void Put(Vector2Int[] points, int index, Vector2Int offset = new Vector2Int())
+        internal void Put(IList<Vector2Int> points, int index)
         {
             foreach (var point in points)
             {
-                _map[point.x + offset.x, point.y + offset.y] = index;
+                _map[point.x, point.y] = index;
             }
-            _empty -= points.Length;
+            _empty -= points.Count;
         }
 
         /// <summary>
         /// もとに戻す
         /// </summary>
-        internal void Reset(Vector2Int[] points, Vector2Int offset = new Vector2Int())
+        internal void Reset(Vector2Int[] points)
         {
             foreach (var point in points)
             {
-                _map[point.x + offset.x, point.y + offset.y] = PackingUtility.EMPTY;
+                _map[point.x, point.y] = PackingUtility.EMPTY;
             }
 
             _empty += points.Length;
+        }
+
+        /// <summary>
+        /// 全データ初期化
+        /// </summary>
+        internal void Clear()
+        {
+            for (var x = 0; x < _map.GetLength(0); x++)
+            {
+                for (var y = 0; y < _map.GetLength(1); y++)
+                {
+                    _map[x, y] = _invalids != null && _invalids.Contains(new Vector2Int(x, y))
+                        ? PackingUtility.INVALID
+                        : PackingUtility.EMPTY;
+                }
+            }
         }
 
         /// <summary>

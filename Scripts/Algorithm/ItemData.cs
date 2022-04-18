@@ -25,9 +25,12 @@ namespace Yorozu
         /// </summary>
         internal int Index { get; }
 
+        protected Vector2Int size; 
+
         internal ItemData(bool[,] shape, Vector2Int size, int index)
         {
             Index = index;
+            this.size = size;
             CacheValidPosition(shape);
         }
 

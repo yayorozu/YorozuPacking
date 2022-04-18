@@ -24,6 +24,7 @@ namespace Yorozu
         internal int logScore { get; private set; }
         internal bool all { get; private set; }
         internal int allowCount { get; private set; }
+        internal ILogger logger { get; private set; }
 
         private bool parallel;
         private bool _wait;
@@ -98,6 +99,7 @@ namespace Yorozu
             {
                 Algorithm.BottomLeft => new BottomLeftSearcher(this, algorithm),
                 Algorithm.LeftBottom => new BottomLeftSearcher(this, algorithm),
+                Algorithm.X => new XSearcher(this),
                 _ => throw new ArgumentOutOfRangeException(nameof(algorithm), algorithm, null)
             };
         }
@@ -150,6 +152,12 @@ namespace Yorozu
         public WaitPackingSearch SetAllowEmptyCount(int count)
         {
             allowCount = Mathf.Max(0, count);
+            return this;
+        }
+        
+        public WaitPackingSearch ValidLog(ILogger logger)
+        {
+            this.logger = logger;
             return this;
         }
     }
