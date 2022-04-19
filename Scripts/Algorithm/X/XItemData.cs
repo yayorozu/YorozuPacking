@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 
@@ -59,7 +60,7 @@ namespace Yorozu
             }
         }
         
-        internal XItemData(bool[,] shape, Vector2Int size, int index) : base(shape, size, index)
+        internal XItemData(bool[,] shape, Vector2Int size, int index, HashSet<int> invalidPositions) : base(shape, size, index)
         {
             _columns = new List<HashSet<int>>();
             _length = size.x * size.y;
@@ -77,7 +78,11 @@ namespace Yorozu
                         var columnIndex = x + p.x + (y + p.y) * size.x;
                         column.Add(columnIndex);
                     }
-
+                    
+                    // 無効座標が含まれていた場合は無視
+                    if (invalidPositions.Count > 0 && column.Any(invalidPositions.Contains))
+                        continue;
+                    
                     _columns.Add(column);
                 }
             }

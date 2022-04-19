@@ -19,7 +19,7 @@ namespace Yorozu
 
         protected override AlgorithmNode GetNode(int startIndex)
         {
-            return new XAlgorithm(_owner, startIndex);
+            return new XAlgorithm(_owner);
         }
     }
 
@@ -36,14 +36,20 @@ namespace Yorozu
         private int _length;
         private CancellationToken _token;
         
-        internal XAlgorithm(WaitPackingSearch owner, int startIndex) : base(owner, startIndex)
+        internal XAlgorithm(WaitPackingSearch owner) : base(owner, 0)
         {
+            // 無効なIndex一覧
+            var invalidIndexHash = new HashSet<int>(owner.invalidPositions.Count);
+            foreach (var p in owner.invalidPositions) 
+                invalidIndexHash.Add(p.x + p.y * owner.size.x);
+
             _data = owner.shapes
-                    .Select((v, i) => new XItemData(v, owner.size, i))
+                    .Select((v, i) => new XItemData(v, owner.size, i, invalidIndexHash))
                     .ToArray()
                 ;
             
-            _length = owner.size.x * owner.size.y;
+            // 無効分を引く
+            _length = owner.size.x * owner.size.y - invalidIndexHash.Count;
             _deletedRows = new HashSet<int>(_length);
         }
 
