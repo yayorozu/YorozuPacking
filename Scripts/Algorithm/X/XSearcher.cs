@@ -205,12 +205,6 @@ namespace Yorozu
                 return new List<int>();
 
             var key = dic.Keys.First();
-            if (false)//if (validLog)
-            {
-                var rowsString = string.Join(",", dic[key].Select(r => r.ToString()).ToArray());
-                PrintColumns($"Sum: {key} TargetRows: {rowsString}");
-            }
-
             return dic[key];
         }
         
