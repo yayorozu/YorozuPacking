@@ -68,7 +68,7 @@ namespace Yorozu
         /// 探索開始
         /// 見つからなかった場合は指定した値以下の空き結果を記録して返す
         /// </summary>
-        public void Evaluate(Algorithm algorithm = Algorithm.BottomLeft)
+        public void Evaluate()
         {
             _wait = true;
             
@@ -87,7 +87,7 @@ namespace Yorozu
                     }
                 };
 #endif
-                var searcher = GetSearcher(algorithm);
+                var searcher = GetSearcher(Algorithm.DLX);
                 _result = await searcher.Process(parallel, source);
                 _wait = false;
             }

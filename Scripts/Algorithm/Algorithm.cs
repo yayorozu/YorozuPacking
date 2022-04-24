@@ -1,6 +1,6 @@
 namespace Yorozu
 {
-    public enum Algorithm
+    internal enum Algorithm
     {
         /// <summary>
         /// 下左優先
