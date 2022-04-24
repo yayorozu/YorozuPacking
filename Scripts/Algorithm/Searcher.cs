@@ -26,16 +26,26 @@ namespace Yorozu
             _logs = new List<Log>();
         }
 
+        protected virtual bool ValidAllIndexSearch => true;
+
         /// <summary>
         /// 再帰的に探索開始
         /// </summary>
         internal async Task<PackingResult> Process(bool parallel, CancellationTokenSource source)
         {
             var begin = DateTime.Now;
-            if (parallel)
-                await Parallel(source);
+            // 総当りが無効な場合は1回だけ
+            if (!ValidAllIndexSearch)
+            {
+                await SearchTask(0, source);
+            }
             else
-                await Sequence(source);
+            {
+                if (parallel)
+                    await Parallel(source);
+                else
+                    await Sequence(source);
+            }
 
             var elapsedTime = (DateTime.Now - begin).Milliseconds;
 
@@ -51,7 +61,6 @@ namespace Yorozu
         private async Task Parallel(CancellationTokenSource source)
         {
             var tasks = new List<Task>();
-
             for (var i = 0; i < _owner.shapes.Count(); i++)
             {
                 tasks.Add(SearchTask(i, source));

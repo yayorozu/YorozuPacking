@@ -25,17 +25,23 @@ namespace Yorozu
         /// </summary>
         internal int Index { get; }
 
+        protected Vector2Int size; 
+
         internal ItemData(bool[,] shape, Vector2Int size, int index)
         {
             Index = index;
-            CacheValidPosition(shape);
+            this.size = size;
+            var values = CalcValidPosition(shape);
+            width = values.width;
+            height = values.height;
+            validPositions = values.validPositions;
         }
 
         /// <summary>
         /// 有効なローカル座標をキャッシュ
         /// </summary>
         /// <param name="shape"></param>
-        private void CacheValidPosition(bool[,] shape)
+        internal static (int width, int height, Vector2Int[] validPositions) CalcValidPosition(bool[,] shape)
         {
             var validPositions = new List<Vector2Int>(shape.Length);
             for (var x = 0; x < shape.GetLength(0); x++)
@@ -60,9 +66,9 @@ namespace Yorozu
                 );
             }
 
-            this.validPositions = validPositions.ToArray();
-            width = validPositions.Max(v => v.x);
-            height = validPositions.Max(v => v.y);
+            var width = validPositions.Max(v => v.x);
+            var height = validPositions.Max(v => v.y);
+            return (width, height, validPositions.ToArray());
         }
     }
 }

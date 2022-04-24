@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
+using UnityEngine;
 
 namespace Yorozu
 {
@@ -13,7 +15,8 @@ namespace Yorozu
         protected Stack<int> _unusedStack;
         protected int allowCount => _owner.allowCount;
         protected bool all => _owner.all;
-
+        protected bool validLog { get; }
+        
         internal List<Log> Logs => _logs;
         internal int[,] CurrentMap => _box.Map;
         /// <summary>
@@ -25,6 +28,7 @@ namespace Yorozu
         internal AlgorithmNode(WaitPackingSearch owner, int startIndex)
         {
             _owner = owner;
+            validLog = owner.logger != null;
             _box = new Box(owner);
             _logs = new List<Log>();
             _successMap = new List<int[,]>();
@@ -52,6 +56,11 @@ namespace Yorozu
                 return;
             
             _logs.Add(new Log(box.Copy(), box.EmptyCount()));
+        }
+
+        protected void Logger(string logText)
+        {
+            _owner.logger.Log(logText);
         }
     }
 }
