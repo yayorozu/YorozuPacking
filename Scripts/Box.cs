@@ -32,6 +32,12 @@ namespace Yorozu
             return _map[point.x, point.y] == PackingUtility.EMPTY;
         }
 
+        internal void Put(int x, int y, int index)
+        {
+            _map[x, y] = index;
+            _empty -= 1;
+        }
+
         /// <summary>
         /// 置き状態に
         /// </summary>

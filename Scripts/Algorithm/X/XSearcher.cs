@@ -31,7 +31,7 @@ namespace Yorozu
         /// <summary>
         /// 削除した縦のIndex
         /// </summary>
-        private HashSet<int> _deletedRows;
+        private HashSet<int> _deletedColumns;
         private XItemData[] _data;
         private int _length;
         private CancellationToken _token;
@@ -50,12 +50,16 @@ namespace Yorozu
             
             // 無効分を引く
             _length = owner.size.x * owner.size.y - invalidIndexHash.Count;
-            _deletedRows = new HashSet<int>(_length);
+            _deletedColumns = new HashSet<int>(_length);
         }
 
         internal override void Process(CancellationToken token)
         {
             _token = token;
+            if (validLog)
+            {
+                PrintColumns();
+            }
             ProcessRecursive();
         }
 
@@ -65,9 +69,8 @@ namespace Yorozu
             if (_token.IsCancellationRequested)
                 return false;
 
-            var deleteRows = FindMinSumRow();
             // 全部置いたか許容数埋まった場合終わり
-            if (_length - _deletedRows.Count <= allowCount)
+            if (_length - _deletedColumns.Count <= allowCount)
             {
                 _box.Clear();
                 // データを適応してマップを作成
@@ -80,14 +83,16 @@ namespace Yorozu
                 AddSuccessLog();
                 return true;
             }
+            
+            var deleteColumns = FindMinSumColumns();
             // もうこれ以上削除できないのに正解判定にひっかからなかった場合は違う
-            if (deleteRows.Count <= 0)
+            if (deleteColumns.Count <= 0)
                 return false;
 
             // 関連列を削除していく
-            foreach (var deleteRow in deleteRows)
+            foreach (var deleteColumn in deleteColumns)
             {
-                if (DeleteRelativeRows(deleteRow))
+                if (DeleteRelativeColumns(deleteColumn))
                     return true;
             }
 
@@ -98,7 +103,7 @@ namespace Yorozu
         /// <summary>
         /// 指定した行の中で数値がある箇所を候補にする
         /// </summary>
-        private bool DeleteRelativeRows(int row)
+        private bool DeleteRelativeColumns(int row)
         {
             foreach (var data in _data)
             {
@@ -106,12 +111,12 @@ namespace Yorozu
                     continue;
                 
                 // 対象列を含むデータ一覧を探す、見つかればその行が持ってる列を不可にする
-                foreach (var tuple in data.HasRows(row))
+                foreach (var tuple in data.HasColumns(row))
                 {
-                    data.UpdateSelectColum(tuple.column);
+                    data.UpdateSelectIndex(tuple.column);
                     
                     foreach (var rowIndex in tuple.hash) 
-                        _deletedRows.Add(rowIndex);
+                        _deletedColumns.Add(rowIndex);
 
                     // 対象列を含むデータを候補から外す
                     foreach (var data2 in _data)
@@ -128,7 +133,7 @@ namespace Yorozu
                     if (validLog)
                     {
                         var fixDataIndexes = string.Join(",", _data.Where(d => d.IsFix).Select(d => d.Index.ToString()).ToArray());
-                        PrintColumns($"Delete Row: {row}, FixDataIndex: {data.Index} FixedIndexes: {fixDataIndexes}");
+                        PrintColumns($"Delete Row: {row}, Column: {tuple.column}, FixDataIndex: {data.Index}, FixedIndexes: {fixDataIndexes}");
                     }
 
                     // 問題なければ更に確認
@@ -148,15 +153,15 @@ namespace Yorozu
                     }
                     
                     // 確定フラグを戻す
-                    data.UpdateSelectColum(null);
+                    data.UpdateSelectIndex(null);
                     
                     // 続けられないので戻す
                     foreach (var rowIndex in tuple.hash) 
-                        _deletedRows.Remove(rowIndex);
+                        _deletedColumns.Remove(rowIndex);
                     
                     if (validLog)
                     {
-                        PrintColumns($"Undo Row: {row}, FixDataIndex: {data.Index}");
+                        PrintColumns($"Undo   Row: {row}, FixDataIndex: {data.Index}");
                     }
                 }
             }
@@ -168,12 +173,12 @@ namespace Yorozu
         /// 合計値が少ない列を探す
         /// </summary>
         /// <returns></returns>
-        private List<int> FindMinSumRow()
+        private List<int> FindMinSumColumns()
         {
             var dic = new SortedDictionary<int, List<int>>();
             for (var row = 0; row < _length; row++)
             {
-                if (_deletedRows.Contains(row))
+                if (_deletedColumns.Contains(row))
                     continue;
 
                 var sum = 0;
@@ -200,7 +205,7 @@ namespace Yorozu
                 return new List<int>();
 
             var key = dic.Keys.First();
-            if (validLog)
+            if (false)//if (validLog)
             {
                 var rowsString = string.Join(",", dic[key].Select(r => r.ToString()).ToArray());
                 PrintColumns($"Sum: {key} TargetRows: {rowsString}");
@@ -222,7 +227,7 @@ namespace Yorozu
             builder.Append("                       ");
             for (var r = 0; r < _length; r++)
             {
-                if (_deletedRows.Contains(r))
+                if (_deletedColumns.Contains(r))
                     continue;
 
                 builder.Append($"{r:D2}..");
@@ -234,7 +239,7 @@ namespace Yorozu
             {
                 if (!data.IsFix)
                 {
-                    foreach (var column in data.PrintValidColumns(_deletedRows, index))
+                    foreach (var column in data.PrintValidRows(_deletedColumns, index))
                     {
                         builder.AppendLine(column);
                     }

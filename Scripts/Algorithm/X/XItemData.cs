@@ -26,12 +26,12 @@ namespace Yorozu
         /// <summary>
         /// 正解カラムのIndex
         /// </summary>
-        private int? _validColumnIndex = null;
+        private int? _validIndex = null;
 
         /// <summary>
         /// このデータ内で確定が出てか
         /// </summary>
-        internal bool IsFix => _validColumnIndex.HasValue;
+        internal bool IsFix => _validIndex.HasValue;
 
         private int _length;
         /// <summary>
@@ -70,29 +70,30 @@ namespace Yorozu
             {
                 for (var x = 0; x < size.x - width; x++)
                 {
-                    var column = new HashSet<int>(size.x * size.y);
+                    var row = new HashSet<int>(size.x * size.y);
 
                     // 有効座標で埋める
                     foreach (var p in validPositions)
                     {
-                        var columnIndex = x + p.x + (y + p.y) * size.x;
-                        column.Add(columnIndex);
+                        var rowIndex = x + p.x + (y + p.y) * size.x;
+                        row.Add(rowIndex);
                     }
                     
                     // 無効座標が含まれていた場合は無視
-                    if (invalidPositions.Count > 0 && column.Any(invalidPositions.Contains))
+                    if (invalidPositions.Count > 0 && row.Any(invalidPositions.Contains))
                         continue;
                     
-                    _columns.Add(column);
+                    _columns.Add(row);
                 }
             }
         }
+        
         
         /// <summary>
         /// 対象列を含む行の列一覧
         /// </summary>
         /// <returns></returns>
-        internal IEnumerable<(int column, HashSet<int> hash)> HasRows(int r)
+        internal IEnumerable<(int column, HashSet<int> hash)> HasColumns(int r)
         {
             for (var i = 0; i < _columns.Count; i++)
             {
@@ -111,7 +112,7 @@ namespace Yorozu
             if (!IsFix)
                 return Array.Empty<Vector2Int>();
 
-            var column = _columns[_validColumnIndex.Value];
+            var column = _columns[_validIndex.Value];
             var ret = new Vector2Int[column.Count];
             var index = 0;
             foreach (var rowIndex in column)
@@ -127,9 +128,9 @@ namespace Yorozu
         /// <summary>
         /// 確定フラグを更新
         /// </summary>
-        internal void UpdateSelectColum(int? index)
+        internal void UpdateSelectIndex(int? index)
         {
-            _validColumnIndex = index;
+            _validIndex = index;
         }
 
         /// <summary>
@@ -175,7 +176,7 @@ namespace Yorozu
         /// <summary>
         /// 現在の未確定行の中身を返す
         /// </summary>
-        internal IEnumerable<string> PrintValidColumns(HashSet<int> deleteRows, int startIndex)
+        internal IEnumerable<string> PrintValidRows(HashSet<int> deleteRows, int startIndex)
         {
             var builder = new StringBuilder(_length);
             for (var i = 0; i < _columns.Count; i++)
@@ -190,7 +191,7 @@ namespace Yorozu
                     if (deleteRows.Contains(row))
                         continue;
 
-                    builder.Append(_columns[i].Contains(row) ? "●" : "○");
+                    builder.Append(_columns[i].Contains(row) ? "●" : "_");
                     builder.Append("   ");
                 }
 

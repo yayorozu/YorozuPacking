@@ -100,6 +100,7 @@ namespace Yorozu
                 Algorithm.BottomLeft => new BottomLeftSearcher(this, algorithm),
                 Algorithm.LeftBottom => new BottomLeftSearcher(this, algorithm),
                 Algorithm.X => new XSearcher(this),
+                Algorithm.DLX => new DancingLinksSearcher(this),
                 _ => throw new ArgumentOutOfRangeException(nameof(algorithm), algorithm, null)
             };
         }
