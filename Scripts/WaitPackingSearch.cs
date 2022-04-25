@@ -20,7 +20,7 @@ namespace Yorozu
 
         internal IEnumerable<bool[,]> shapes { get; private set; }
         internal Vector2Int size { get; private set; }
-        internal IList<Vector2Int> invalidPositions { get; private set; }
+        internal IList<Vector2Int> invalidPositions { get; private set; } = new List<Vector2Int>();
         internal int logScore { get; private set; }
         internal bool all { get; private set; }
         internal int allowCount { get; private set; }
