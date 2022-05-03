@@ -72,8 +72,11 @@ namespace Yorozu
         {
             _wait = true;
             
+#if UNITY_WEBGL
+            _ = Process();
+#else
             _ = Task.Run(Process);
-
+#endif
             async Task Process()
             {
                 var source = new CancellationTokenSource();
