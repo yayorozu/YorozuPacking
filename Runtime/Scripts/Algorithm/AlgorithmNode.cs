@@ -44,7 +44,12 @@ namespace Yorozu
         /// </summary>
         protected void AddSuccessLog()
         {
-            _successMap.Add(CurrentMap.Copy());
+            var dst = new int[CurrentMap.GetLength(0), CurrentMap.GetLength(1)];
+            for (var a = 0; a < CurrentMap.GetLength(0); a++)
+            for (var b = 0; b < CurrentMap.GetLength(1); b++)
+                dst[a, b] = CurrentMap[a, b];
+            
+            _successMap.Add(dst);
         }
         
         /// <summary>
